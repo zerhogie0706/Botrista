@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate
 from rest_framework import serializers
+from .models import Product, Order
 
 
 class LoginSerializer(serializers.Serializer):
@@ -17,3 +18,9 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Must include both username and password.")
         data['user'] = user
         return data
+    
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = '__all__'
