@@ -4,10 +4,13 @@ from rest_framework.authtoken.models import Token
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .serializers import LoginSerializer, ProductSerializer
+from django.db import transaction
+
+from .serializers import LoginSerializer, ProductSerializer, OrderSerializer
 from .decorators import login_required
-from .models import Product, Order
+from .models import Product, Order, OrderItem
 from .permissions import ManangerPermission
+from .exceptions import OutOfStockException
 
 
 @login_required
@@ -27,20 +30,18 @@ class LoginAPIView(APIView):
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
-    permission_classes = [ManangerPermission]
+    # permission_classes = [ManangerPermission]
     serializer_class = ProductSerializer
 
-    def get_permissions(self):
-        if self.action == 'list':
-            self.permission_classes = [AllowAny, ]
-        return super().get_permissions()
+    # def get_permissions(self):
+    #     if self.action == 'list':
+    #         self.permission_classes = [AllowAny, ]
+    #     return super().get_permissions()
 
     def list(self, request):
         qs = self.get_queryset()
-        print(qs)
         serializer = self.get_serializer(qs, many=True)
         payload = serializer.data
-        print(payload)
         return Response(payload)
 
     def create(self, request):
@@ -72,7 +73,69 @@ class ProductViewSet(viewsets.ModelViewSet):
         payload = serializer.data
         return Response(payload)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if OrderItem.objects.filter(product=instance).exists():
+            raise
+        instance.delete()
+        return Response({})
+
 
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
-    pass
+    serializer_class = OrderSerializer
+   
+    def list(self, request):
+        # user = request.user
+        qs = self.get_queryset()
+        # if user.userprofile.role == 'Customer':
+        #     pass
+            
+        serializer = self.get_serializer(qs, many=True)
+        payload = serializer.data
+        return Response(payload)
+
+    def create(self, request):
+        # user = request.user
+        user_id = 1
+
+        order_items = request.data.get('order_items')
+        try:
+            with transaction.atomic():
+                order = Order.objects.create(user_id=user_id)
+                product_ids = [data['product_id'] for data in order_items]
+                products = Product.objects.filter(id__in=product_ids)
+                product_mapping = {product.id: product for product in products}
+
+                item_data = []
+                for data in order_items:
+                    product_id = data['product_id']
+                    quantity = data['quantity']
+                    product =  product_mapping.get(product_id)
+
+                    if not product:
+                        raise Exception(f'Product not found: {product_id}')
+
+                    if quantity > product.stock:
+                        raise OutOfStockException
+
+                    item_data.append(
+                        OrderItem(
+                            order=order,
+                            product_id=product_id,
+                            quantity=quantity,
+                        )
+                    )
+                    product.stock -= quantity
+                OrderItem.objects.bulk_create(item_data)
+                Product.objects.bulk_update(products, ['stock'])
+            
+            serializer = self.get_serializer(order)
+            payload = serializer.data
+            return Response(payload)
+
+        except OutOfStockException as e:
+            return Response({'msg': str(e)}, status=400)
+        
+        except Exception as e:
+            return Response({'msg': str(e)}, status=500)

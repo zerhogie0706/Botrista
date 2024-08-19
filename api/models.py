@@ -13,7 +13,7 @@ class Timestamp(models.Model):
 class UserProfile(Timestamp):
     ROLE_CHOICES = [
         ('Manager', 'Manager'),
-        ('Customer', 'Editor'),
+        ('Customer', 'Customer'),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)

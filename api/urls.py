@@ -9,6 +9,6 @@ urlpatterns = [
 
 router = DefaultRouter()
 router.register(r'product', views.ProductViewSet)
-# router.register(r'order', views.OrderViewSet)
+router.register(r'order', views.OrderViewSet)
 
 urlpatterns += router.urls
