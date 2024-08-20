@@ -114,7 +114,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             with transaction.atomic():
                 order = Order.objects.create(user_id=user.id)
                 product_ids = [data['product_id'] for data in order_items]
-                products = Product.objects.filter(id__in=product_ids)
+                products = Product.objects.select_for_update().filter(id__in=product_ids)
                 product_mapping = {product.id: product for product in products}
 
                 item_data = []
@@ -139,13 +139,13 @@ class OrderViewSet(viewsets.ModelViewSet):
                     product.stock -= quantity
                 OrderItem.objects.bulk_create(item_data)
                 Product.objects.bulk_update(products, ['stock'])
-            
+
             serializer = self.get_serializer(order)
             payload = serializer.data
             return Response(payload)
 
         except OutOfStockException as e:
             return Response({'msg': str(e)}, status=400)
-        
+
         except Exception as e:
             return Response({'msg': str(e)}, status=500)
