@@ -28,6 +28,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items_info = serializers.SerializerMethodField()
+    user = serializers.ReadOnlyField(source='user.username')
 
     def get_items_info(self, obj):
         items = obj.order_items.all()
@@ -35,7 +36,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['items_info']
+        fields = ['id', 'user', 'items_info', 'created_at']
 
 
 class OrderItemSerializer(serializers.ModelSerializer):

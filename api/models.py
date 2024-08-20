@@ -17,7 +17,10 @@ class UserProfile(Timestamp):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='Customer')
+
+    def __str__(self):
+        return self.user.username
 
 
 class Product(Timestamp):
