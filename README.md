@@ -1,1 +1,1 @@
-1. RUN "docker-compose up --build" to start to service
+1. RUN "docker-compose up --build" to start the service

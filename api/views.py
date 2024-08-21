@@ -45,6 +45,18 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def list(self, request):
         qs = self.get_queryset()
+        stock = request.query_params.get('stock')
+        price = request.query_params.get('price')
+
+        if stock:
+            if not stock.isdigit():
+                return Response({'error': f'stock param should be a digit: {stock}'}, status=status.HTTP_400_BAD_REQUEST)
+            qs = qs.filter(stock__gte=stock)
+        if price:
+            if not price.isdigit():
+                return Response({'error': f'price param should be a digit: {price}'}, status=status.HTTP_400_BAD_REQUEST)
+            qs = qs.filter(price__gte=price)
+
         serializer = self.get_serializer(qs, many=True)
         payload = serializer.data
         return Response(payload)

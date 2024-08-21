@@ -1,15 +1,6 @@
 version: '3'
 
 services:
-  # db:
-  #   image: postgres:14
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data/
-  #   environment:
-  #     POSTGRES_DB: your_database_name
-  #     POSTGRES_USER: your_database_user
-  #     POSTGRES_PASSWORD: your_database_password
-
   web:
     image: python:3.10
     build: .
