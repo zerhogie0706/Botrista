@@ -14,11 +14,6 @@ from .permissions import ManangerPermission, CustomerPermission
 from .exceptions import OutOfStockException
 
 
-@login_required
-def test(request):
-    return JsonResponse({'success': True})
-
-
 class LoginAPIView(APIView):
     permission_classes = [AllowAny]
 
