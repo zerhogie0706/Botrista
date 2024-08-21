@@ -1,14 +1,12 @@
-from django.http import JsonResponse
 from django.contrib.auth import login
+from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.authtoken.models import Token
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db import transaction
 
 from .serializers import LoginSerializer, ProductSerializer, OrderSerializer
-from .decorators import login_required
 from .models import Product, Order, OrderItem
 from .permissions import ManangerPermission, CustomerPermission
 from .exceptions import OutOfStockException
@@ -23,8 +21,8 @@ class LoginAPIView(APIView):
             user = serializer.validated_data['user']
             # login(request, user)
             token, _ = Token.objects.get_or_create(user=user)
-            return JsonResponse({'token': token.key}, status=status.HTTP_200_OK)
-        return JsonResponse(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'token': token.key}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
